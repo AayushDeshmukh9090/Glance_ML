@@ -1,0 +1,96 @@
+# Triple-Stream Fashion Search Engine Configuration
+
+# Model Configuration
+models:
+  clip_model: "clip-ViT-B-32"
+  blip2_model: "Salesforce/blip2-opt-2.7b"
+
+# Data Configuration
+data:
+  annotations_path: "data/instances_attributes_train2020.json"
+  attributes_path: "data/attributes_train2020.json"
+  images_dir: "data/train"
+  num_images: -1  # Number of images to process (-1 for all)
+
+# ChromaDB Configuration
+chromadb:
+  persist_directory: "./chroma_db"
+  collections:
+    grounded: "grounded_vectors"
+    vibe: "vibe_vectors"
+    visual: "visual_vectors"
+
+# Query Weight Presets (OPTIMIZED via Bayesian Optimization - 2026-01-16)
+# Original hardcoded weights kept in comments for reference
+weight_presets:
+  attribute_specific:  # "bright yellow raincoat"
+    alpha: 0.008  # Grounded (OPTIMIZED: was 0.4)
+    beta: 0.660   # Vibe (OPTIMIZED: was 0.1) - Surprisingly dominant!
+    gamma: 0.331  # Visual (OPTIMIZED: was 0.5)
+    # Optimization score: 0.8238 - Excellent performance
+    
+  contextual_place:  # "modern office attire"
+    alpha: 0.217  # Grounded (OPTIMIZED: was 0.3)
+    beta: 0.266   # Vibe (OPTIMIZED: was 0.6) - Reduced importance
+    gamma: 0.517  # Visual (OPTIMIZED: was 0.1) - Much more important!
+    # Optimization score: 0.2133 - May need more tuning
+    
+  complex_semantic:  # "blue shirt on park bench"
+    alpha: 0.467  # Grounded (OPTIMIZED: was 0.3) - More important!
+    beta: 0.237   # Vibe (OPTIMIZED: was 0.5)
+    gamma: 0.296  # Visual (OPTIMIZED: was 0.2)
+    # Optimization score: 0.5122 - Good balance
+    
+  style_inference:  # "casual weekend city walk"
+    alpha: 0.446  # Grounded (OPTIMIZED: was 0.2) - Much more important!
+    beta: 0.514   # Vibe (OPTIMIZED: was 0.7)
+    gamma: 0.040  # Visual (OPTIMIZED: was 0.1) - Minimal
+    # Optimization score: 0.3269 - Moderate performance
+    
+  compositional:  # "red tie + white shirt + formal"
+    alpha: 0.038  # Grounded (OPTIMIZED: was 0.4)
+    beta: 0.568   # Vibe (OPTIMIZED: was 0.1) - Highly important!
+    gamma: 0.394  # Visual (OPTIMIZED: was 0.5)
+    # Optimization score: 0.9228 - BEST PERFORMING!
+
+# Query Expansion Rules
+expansion_rules:
+  weekend: "relaxed leisure street casual"
+  professional: "business office formal"
+  park: "outdoor nature green bench"
+  modern: "clean minimalist contemporary"
+  bright yellow: "yellow vibrant sunny golden"
+  red: "crimson scarlet burgundy"
+  blue: "navy azure cobalt"
+  white: "ivory cream off-white"
+  tie: "necktie bowtie cravat"
+  jacket: "blazer coat outerwear"
+  dress: "gown frock"
+  shirt: "blouse top"
+  pants: "trousers slacks"
+  suit: "formal business attire"
+
+# Color Extraction Configuration
+color_extraction:
+  kmeans_clusters: 3
+  min_pixels: 50  # Minimum pixels needed for color extraction
+  fallback_color: "neutral"
+
+# BLIP-2 Captioning Configuration
+captioning:
+  prompt: "Describe the environment and style in one sentence. Format: '[setting], [vibe/occasion]'. Examples: 'Indoor office, professional attire' or 'Outdoor park, casual weekend look'. If unclear, say 'neutral setting, everyday wear'."  # BLIP-2 prompt for caption generation
+  batch_size: 16  # Increased for 32GB VRAM - 2x faster Stage 2!
+  min_unique_settings: 50  # Diversity check threshold
+
+# Indexing Configuration
+indexing:
+  encoding_batch_size: 64  # Increased for faster CLIP encoding (text/image)
+  chromadb_batch_size: 5000  # Batch size for ChromaDB insertion
+  visual_checkpoint_interval: 1000  # Save progress every N images
+  incremental_mode: false  # If true, don't delete existing collections
+  save_failed_ids: true  # Save failed image IDs to file
+
+# Retrieval Configuration
+retrieval:
+  top_k: 10
+  query_n_results: 50  # Number of results to fetch per collection
