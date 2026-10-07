@@ -22,7 +22,7 @@ The three streams are combined at search time so the system can handle simple, c
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/Glance-ML.git
+git clone https://github.com/AayushDeshmukh9090/Glance_ML.git
 cd Glance-ML
 ```
 
