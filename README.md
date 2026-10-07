@@ -1,437 +1,421 @@
 # Triple-Stream Fashion Search Engine
 
-A sophisticated fashion image retrieval system that understands **what** someone is wearing, **where** they are, and the **vibe** of their attire using a novel triple-stream architecture.
+A fashion image retrieval system that searches images using three types of information:
 
-> **📦 Pre-indexed Database Available**: If you need the indexed `chroma_db/`, `logs/`, and `outputs/` folders, download them from [Google Drive](https://drive.google.com/drive/folders/1KzYAc0MjlBHCEsXJP3L_8I_QdKsrTURa?usp=sharing).
+- **Fashion facts** such as clothing attributes and colors
+- **Context and style** from image captions
+- **Visual features** from the image itself
 
-> **🎥 Demo Video**: Watch the Web UI in action at [Google Drive](https://drive.google.com/file/d/1OnA6LFqLni2XDpjmIwVKiXBlMu7tDq45/view?usp=sharing).
+The three streams are combined at search time so the system can handle simple, contextual, and compositional fashion queries.
 
----
+> **Demo video:** [View the Web UI demo](https://drive.google.com/file/d/1OnA6LFqLni2XDpjmIwVKiXBlMu7tDq45/view?usp=sharing)
 
-## 🚀 Installation & Setup
+## Setup
 
-### Prerequisites
+### Requirements
 
 - Python 3.8+
-- CUDA-capable GPU (recommended for BLIP-2 caption generation)
-- 8GB+ RAM
-- 5GB+ disk space (for models and database)
+- 8 GB+ RAM
+- 5 GB+ free disk space
+- CUDA-capable GPU recommended for BLIP-2
 
-### Step 1: Clone the Repository
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/AdityaChaudhary2913/Glance-ML.git
+git clone https://github.com/YOUR_GITHUB_USERNAME/Glance-ML.git
 cd Glance-ML
 ```
 
-### Step 2: Install Dependencies
+### 2. Install dependencies
 
 ```bash
-# Create virtual environment (recommended)
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
+```
 
-# Install dependencies
+On Windows:
+
+```bash
+venv\Scripts\activate
+```
+
+Install the required packages:
+
+```bash
 pip install -r requirements.txt
+```
 
-# Install fashionpedia-api
+Install the Fashionpedia API package:
+
+```bash
 cd fashionpedia-api-master
 pip install -e .
 cd ..
 ```
 
-**Key dependencies:**
-- `chromadb` - Vector database
-- `transformers` - CLIP & BLIP-2 models
-- `torch` - Deep learning framework
-- `streamlit` - Web interface
-- `Pillow` - Image processing
-- `pyyaml` - Configuration management
+Main libraries used:
 
-### Step 3: Download Pre-indexed Database (Recommended)
+- `chromadb` - vector database
+- `transformers` - CLIP and BLIP-2
+- `torch` - deep learning
+- `streamlit` - web interface
+- `Pillow` - image processing
+- `pyyaml` - configuration
 
-To skip the indexing step and use pre-built vectors:
+## Use the Pre-indexed Database
 
-```bash
-# Download chroma_db/, logs/, and outputs/ from Google Drive
-# Link: https://drive.google.com/drive/folders/1KzYAc0MjlBHCEsXJP3L_8I_QdKsrTURa?usp=sharing
+The easiest way to run the project is to use the pre-built database.
 
-# Extract to project root
-unzip chroma_db.zip -d .
+Download:
+
+```text
+chroma_db/
+logs/
+outputs/
 ```
 
-**OR** proceed to Step 4 to build from scratch.
+from the Google Drive link above and place them in the project root.
 
-### Step 4: Download Fashionpedia Dataset (If Building from Scratch)
-
-```bash
-# Download from Fashionpedia website
-# Place files in data/ directory:
-# - instances_attributes_train2020.json (or instances_attributes_val2020.json)
-# - attributes_train2020.json (or attributes_val2020.json)
-# - info_test2020.json
-# - train/ (folder with 45,623 images)
-```
-
-Configure paths in `shared/config.yaml` if your data files have different names or locations.
-
-### Step 5: Run Indexing Pipeline (If Building from Scratch)
-
-```bash
-bash bash_files/indexer_pipeline.sh
-```
-
-This will:
-1. Extract Fashionpedia attributes and colors → Generate V_fact
-2. Generate BLIP-2 captions → Generate V_vibe
-3. Encode images with CLIP → Generate V_img
-4. Store 136,869 vectors in ChromaDB
-
-**Estimated time**: 2-4 hours on GPU (8-12 hours on CPU)
-
-### Step 6: Launch Web Interface
+You can then start the application with:
 
 ```bash
 streamlit run app.py
 ```
 
-Open `http://localhost:8501` to start searching!
+Open:
 
----
-
-## 📁 Project Structure
-
+```text
+http://localhost:8501
 ```
-Glance/
-├── app.py                      # 🌐 Streamlit web interface
-├── indexer/                    # Part A: Feature Extraction & Vector Storage
-│   ├── indexer.py             # Vector indexing into ChromaDB
-│   ├── caption_generator.py   # BLIP-2 caption generation
-│   ├── README.md              # Detailed indexer documentation
+
+## Build the Database from Scratch
+
+### 1. Download Fashionpedia
+
+Place the dataset inside `data/`.
+
+Expected files include:
+
+```text
+instances_attributes_train2020.json
+attributes_train2020.json
+info_test2020.json
+train/
+```
+
+The dataset contains 45,623 fashion images.
+
+Update the paths in:
+
+```text
+shared/config.yaml
+```
+
+when required.
+
+### 2. Run the indexing pipeline
+
+```bash
+bash bash_files/indexer_pipeline.sh
+```
+
+The pipeline:
+
+1. Extracts Fashionpedia attributes and colors
+2. Generates BLIP-2 captions
+3. Encodes images with CLIP
+4. Stores the resulting vectors in ChromaDB
+
+The full indexing process takes several hours depending on the hardware. The pipeline supports checkpointing and can resume from saved progress.
+
+## Project Structure
+
+```text
+Glance-ML/
+├── app.py
+├── indexer/
+│   ├── indexer.py
+│   ├── caption_generator.py
+│   ├── README.md
 │   └── __init__.py
-│
-├── retriever/                  # Part B: Search & Query Logic
-│   ├── retriever.py           # Triple-stream search with latency tracking
-│   ├── evaluate.py            # Evaluation & comparison vs vanilla CLIP
-│   ├── README.md              # Detailed retriever documentation
+├── retriever/
+│   ├── retriever.py
+│   ├── evaluate.py
+│   ├── optimize_weights.py
+│   ├── README.md
 │   └── __init__.py
-│
-├── shared/                     # Shared utilities & configuration
-│   ├── utils.py               # Color extraction, Fashionpedia parsing
-│   ├── logger.py              # Logging configuration
-│   ├── config.yaml            # Central configuration file
+├── shared/
+│   ├── utils.py
+│   ├── logger.py
+│   ├── config.yaml
 │   └── __init__.py
-│
-├── data/                       # Fashionpedia dataset
-│   ├── instances_attributes_train2020.json
-│   ├── attributes_train2020.json
-│   └── train/                 # 45,623 fashion images
-│
-├── chroma_db/                  # Persistent vector database (45,623 × 3 streams)
-├── logs/                       # Runtime logs (indexer.log, retriever.log)
-├── outputs/                    # Generated vectors and manifests
-├── indexer_pipeline.sh        # Automated indexing pipeline
-├── retriever_pipeline.sh      # Run retrieval tests
-└── README.md                   # This file
+├── data/
+├── chroma_db/
+├── logs/
+├── outputs/
+├── indexer_pipeline.sh
+├── retriever_pipeline.sh
+├── requirements.txt
+└── README.md
 ```
 
 ## Architecture
 
-The system treats every image as a **three-vector entity**, storing vectors independently to enable dynamic query-time weighting based on search intent:
+Each image is represented using three separate vectors:
 
-| Stream | Source | Encoding | Purpose |
-|--------|--------|----------|---------|
-| **V_fact** (Grounded) | Fashionpedia (46 categories, 294 attributes) + K-means color extraction | CLIP Text | Structured fashion knowledge |
-| **V_vibe** (Contextual) | **Context-aware** BLIP-2 captions with constrained prompting | CLIP Text | Scene/style/occasion inference with compositional understanding |
-| **V_img** (Visual) | Raw images | CLIP Image | Implicit visual features |
+| Stream | Source | Purpose |
+|---|---|---|
+| **V_fact** | Fashionpedia attributes + colors | Structured fashion information |
+| **V_vibe** | BLIP-2 captions | Scene, style, and occasion |
+| **V_img** | CLIP image encoder | Visual information |
 
-**Core Formula**: `Score = α·S_fact + β·S_vibe + γ·S_img`
+At query time, the streams are combined using:
 
-### Key Innovation: Context-Aware V_vibe Generation
-
-V_vibe captions are generated using BLIP-2 with constrained prompting:
-```
-Input to BLIP-2: Image + "Describe the scene, style, and occasion"
-BLIP-2 generates: "A person wearing a red wool blazer and blue slim-fit jeans standing in a modern office environment"
+```text
+Score = α·S_fact + β·S_vibe + γ·S_img
 ```
 
-BLIP-2 provides:
-- ✅ **Strong scene understanding** - Good at contextual descriptions
-- ✅ **Controlled generation** - Constrained prompting for consistent output
-- ✅ **Rich captions** - Detailed scene + garment descriptions
-- ✅ **Stable model** - 2.7B parameter OPT-based model for reliable generation
+This allows the system to give more importance to the stream that matches the query.
 
-## Features
+For example:
 
-- **Multi-stream vector search** with query-time dynamic weighting
-- **Color-aware fashion understanding** via K-means clustering on segmentation masks
-- **Scene and style inference** using BLIP-2 with constrained prompting
-- **Query expansion** with fashion-specific synonyms
-- **Compositional query handling** (e.g., "red tie + white shirt + formal setting")
-- **Configurable weight presets** for different query types
-- **Real-time latency tracking** for performance monitoring (~30-40ms per query)
-- **Batch metadata retrieval** for 10-30x faster results display
+- Attribute queries can emphasize fashion attributes
+- Style queries can emphasize contextual descriptions
+- Visual queries can rely more on image features
 
-## Usage
+## Key Features
 
-### Indexing (Already Completed - 45,623 images indexed)
+- Triple-stream vector search
+- Dynamic query-time weighting
+- Fashion attribute and color extraction
+- BLIP-2 based scene and style captions
+- CLIP-based image and text embeddings
+- Fashion-specific query expansion
+- Compositional queries such as `"red tie + white shirt"`
+- Configurable weight presets
+- Batch retrieval and latency tracking
 
-The dataset has been fully indexed with all three vector streams:
-- ✅ Grounded layer: 45,623 vectors
-- ✅ Vibe layer: 45,623 vectors  
-- ✅ Visual layer: 45,623 vectors
+## Search Examples
 
-To re-index from scratch:
+The system supports different types of queries:
+
+1. **Attribute**
+   > A person in a bright yellow raincoat
+
+2. **Context**
+   > Professional business attire inside a modern office
+
+3. **Semantic**
+   > Someone wearing a blue shirt sitting on a park bench
+
+4. **Style**
+   > Casual weekend outfit for a city walk
+
+5. **Compositional**
+   > A red tie and a white shirt in a formal setting
+
+## Running Retrieval
+
+Run the retriever directly:
+
 ```bash
-./indexer_pipeline.sh  # Full pipeline with checkpointing
-```
-
-**Pipeline Overview:**
-- Phase 1: Caption generation (V_fact + V_vibe) using BLIP
-- Phase 2: Vector encoding and ChromaDB indexing (all 3 streams)
-- Total time: ~3-4 hours on GPU
-- Auto-resume: Checkpoints every 500 images
-
-### Search & Retrieval
-
-```bash
-# Run demo with all 5 assignment queries
 python retriever/retriever.py
-
-# Or use the pipeline script
-./retriever_pipeline.sh
-
-# Monitor logs
-tail -f logs/retriever.log
 ```
 
-**Query Performance:**
-- First query: ~200-250ms (model warmup)
-- Subsequent queries: ~30-40ms average
-- All results include latency tracking
+Or use:
 
-## Assignment Requirements Compliance
+```bash
+./retriever_pipeline.sh
+```
 
-This project fulfills all requirements from the Glance ML Internship Assignment:
+Logs are stored in:
 
-✅ **Part A - Indexer**: Separate directory with feature extraction and vector storage  
-✅ **Part B - Retriever**: Separate directory with search logic and evaluation  
-✅ **Dataset**: 45,623 Fashionpedia images (exceeds 500-1,000 minimum)  
-✅ **Vector Storage**: ChromaDB (efficient, production-ready)  
-✅ **Context Awareness**: Multi-attribute queries with dynamic weighting  
-✅ **Beyond Vanilla CLIP**: Triple-stream architecture addresses CLIP's compositional limitations  
+```text
+logs/retriever.log
+```
 
-### Evaluation Queries
+Typical query latency after model warm-up is around **30–40 ms** on the measured setup.
 
-The system is tested on all 5 required query types:
+## Query-Time Weighting
 
-1. ✅ **Attribute Specific**: "A person in a bright yellow raincoat"
-2. ✅ **Contextual/Place**: "Professional business attire inside a modern office"
-3. ✅ **Complex Semantic**: "Someone wearing a blue shirt sitting on a park bench"
-4. ✅ **Style Inference**: "Casual weekend outfit for a city walk"
-5. ✅ **Compositional**: "A red tie and a white shirt in a formal setting"
+Instead of merging all embeddings into one vector during indexing, the system keeps the three streams separate.
+
+This makes it possible to change the weights depending on the query:
+
+```text
+Score = α·S_fact + β·S_vibe + γ·S_img
+```
+
+Example optimized weights:
+
+| Query type | α | β | γ |
+|---|---:|---:|---:|
+| Attribute-specific | 0.008 | 0.660 | 0.331 |
+| Contextual place | 0.217 | 0.266 | 0.517 |
+| Complex semantic | 0.467 | 0.237 | 0.296 |
+| Style inference | 0.446 | 0.514 | 0.040 |
+| Compositional | 0.038 | 0.568 | 0.394 |
+
+These weights were optimized using Bayesian optimization with Optuna.
+
+## Evaluation
+
+The triple-stream system was compared with a vanilla CLIP baseline using Precision@10.
+
+| Query type | Triple-Stream | Vanilla CLIP | Improvement |
+|---|---:|---:|---:|
+| Compositional | 100% | 80% | +25% |
+| Attribute-specific | 40% | 10% | +300% |
+| Complex semantic | 10% | 0% | +100% |
+| **Average** | **50%** | **30%** | **+66.7%** |
+
+Evaluation can be run with:
+
+```bash
+python retriever/evaluate.py
+```
+
+The relevance check uses keyword matching against metadata, so the automatic scores may not fully capture semantic relevance for abstract style or context queries.
+
+## Performance
+
+The indexed dataset contains:
+
+- **45,623 images**
+- **136,869 vectors**
+- 3 vector collections
+
+Measured indexing time on the DGX setup:
+
+| Stage | Time |
+|---|---:|
+| Grounded layer generation | 249 min |
+| BLIP-2 caption generation | 199 min |
+| Vector encoding + ChromaDB | 17 min |
+| **Total** | **465 min (~7.75 hours)** |
+
+Query performance:
+
+- First query: ~234 ms
+- Subsequent queries: ~30–40 ms
+
+The project uses batching, checkpointing, and batched ChromaDB inserts to improve processing speed and memory usage.
+
+## Technical Details
+
+### Color Extraction
+
+- K-means clustering with `k=3`
+- Uses segmentation masks
+- Maps RGB values to 20 fashion color names
+- Uses `"neutral"` as a fallback for very small masks
+
+### Scene and Style Captions
+
+BLIP-2 is used to generate context-aware captions from images.
+
+Example:
+
+```text
+A person wearing a red wool blazer and blue slim-fit jeans
+standing in a modern office environment
+```
+
+### Score Normalization
+
+ChromaDB returns distances where lower values indicate closer matches.
+
+The default normalization is:
+
+```text
+1 - (distance / max_distance)
+```
+
+Other supported methods include exponential and inverse normalization.
 
 ## Configuration
 
-Edit `shared/config.yaml` to customize:
+The main configuration file is:
+
+```text
+shared/config.yaml
+```
+
+It contains weight presets and query-expansion rules.
+
+Example:
 
 ```yaml
-# Weight presets for different query types
 weight_presets:
-  attribute_specific:  # "bright yellow raincoat"
-    alpha: 0.4  # Focus on attributes
+  attribute_specific:
+    alpha: 0.4
     beta: 0.1
-    gamma: 0.5  # Boost visual for color
-    
-  style_inference:  # "casual weekend city walk"
+    gamma: 0.5
+
+  style_inference:
     alpha: 0.2
-    beta: 0.7  # Focus on vibe
+    beta: 0.7
     gamma: 0.1
 
-# Query expansion rules
 expansion_rules:
   weekend: "relaxed leisure street casual"
   bright yellow: "yellow vibrant sunny golden"
   red: "crimson scarlet burgundy"
 ```
 
-## Query Types & Presets (Optimized via Bayesian Optimization)
-
-| Query Type | Example | Best Preset | Optimized Weights (α, β, γ) |
-|------------|---------|-------------|------------------------------|
-| Attribute-specific | "bright yellow raincoat" | `attribute_specific` | **0.008, 0.660, 0.331** |
-| Contextual place | "modern office attire" | `contextual_place` | **0.217, 0.266, 0.517** |
-| Complex semantic | "blue shirt on park bench" | `complex_semantic` | **0.467, 0.237, 0.296** |
-| Style inference | "casual weekend outfit" | `style_inference` | **0.446, 0.514, 0.040** |
-| Compositional | "red tie + white shirt" | `compositional` | **0.038, 0.568, 0.394** |
-
-*Weights optimized using Bayesian optimization (Optuna) with 50 global + 30 per-preset trials on 15 diverse test queries.*
-
-## Evaluation Results
-
-### Performance vs Vanilla CLIP Baseline
-
-| Query Type | Triple-Stream P@10 | Vanilla CLIP P@10 | Improvement |
-|------------|-------------------|-------------------|-------------|
-| **Compositional** | **100%** | 80% | **+25%** ⭐ |
-| **Attribute-specific** | **40%** | 10% | **+300%** ⭐⭐⭐ |
-| Complex semantic | 10% | 0% | +100% |
-| **AVERAGE** | **50%** | **30%** | **+66.7%** ✅ |
-
-**Target Achievement:** 15-20% improvement → **Achieved 66.7%** (3-4x better than target!)
-
-**Key Wins:**
-- ✅ **Compositional queries:** Perfect 100% precision with optimized weights (β=0.568)
-- ✅ **Attribute queries:** 4x improvement - 10% → 40% (+300%)
-- ✅ **Complex semantic:** 10% precision vs 0% for vanilla CLIP
-- ✅ **Overall improvement:** 67% better than vanilla CLIP baseline
-
-**Note:** Contextual and style queries show 0% due to keyword-based relevance judgment not capturing semantic similarity for abstract concepts. Manual inspection shows these queries return visually relevant results.
-
-### Run Evaluation Yourself
+## Reproduce the Evaluation
 
 ```bash
-python retriever/evaluate.py
+./run_evaluation.sh
 ```
 
-This compares triple-stream performance against vanilla CLIP baseline using automatic relevance judgment based on keyword matching in metadata.
+Detailed results are saved in:
 
-### Weight Optimization
-
-Weights were optimized using Bayesian optimization (Optuna TPE) with 50 global + 30 per-preset trials:
-
-```bash
-bash bash_files/optimize_weights.sh
+```text
+evaluation_results.json
 ```
 
-See [retriever/optimize_weights.py](retriever/optimize_weights.py) for details on the Bayesian optimization approach.
+The evaluation uses:
 
-## Technical Details
+- Precision@10
+- Keyword-based relevance matching
+- Triple-stream weighted fusion
+- Vanilla CLIP as the baseline
 
-### Color Extraction
-- K-means clustering (k=3) on segmentation masks
-- Maps RGB → 20 fashion color names
+## Limitations
 
-- Fallback to "neutral" for small masks (<50 pixels)
+- The color taxonomy is limited to 20 basic colors
+- BLIP-2 can struggle with unclear or ambiguous scenes
+- Some semantically related clothing terms may not always retrieve the expected results
+- Automatic keyword-based evaluation does not capture all semantic matches
 
-### Scene Inference
-- BLIP-2 with constrained prompting for scene/style understanding
-- Native grounding - better compositional understanding
-- Format: Detailed scene descriptions with garment details
-- Example: "A person wearing a red wool blazer and blue slim-fit jeans standing in a modern office environment"
+## Future Work
 
-### Score Normalization
-- ChromaDB returns L2 distances (lower = better)
-- **Default method**: `relative` - `1 - (distance / max_distance)`
-- Alternative methods: `exponential` (with decay), `inverse` (1 / (1 + distance))
-- Normalized to [0, 1] range before weighted fusion
-- Fixed bug: Changed default from exponential to relative for better score distribution
+Possible improvements include:
 
-## Performance & Scalability
+- Cross-modal attention for stream fusion
+- Fine-tuning CLIP on Fashionpedia
+- Hard-negative mining for compositional queries
+- Real-time context using weather or location data
+- User feedback and click-through optimization
 
-### Optimizations for Full Dataset Run
+## Author
 
-✅ **Batched Image Encoding**: Process 32 images at once (3-5x speedup)  
-✅ **Checkpointing**: Auto-save progress every 500 images, resume on failure  
-✅ **Batched ChromaDB Inserts**: Insert 5000 vectors at a time (prevents memory issues)  
-✅ **Sampled Color Extraction**: 10% sampling, max 500 pixels (speed vs accuracy)  
-
-### Runtime Estimates (45,623 images - COMPLETED)
-
-**Actual measured times from logs (2026-01-16):**
-
-| Stage | Time |
-|-------|------|
-| Grounded Layer Generation (STEP 1) | **249 min (4h 9m)**
-| Vibe Caption Generation - BLIP-2 (STEP 2) | **199 min (3h 19m)**
-| Vector Encoding + ChromaDB Indexing | **17 min**
-| **Total Indexing Time** | **465 min (7.75 hours)**
-| **Collections Created** | **3 × 45,623 vectors**
-
-**Notes:**
-- Grounded layer: 45,623 images @ **3.05 images/sec** (Fashionpedia parsing + color extraction)
-- Vibe captions: 45,623 images @ **3.82 images/sec** (BLIP-2 opt-2.7b, batch_size=8)
-- Vector encoding: 136,869 total vectors (3 streams) @ **135.6 vectors/sec** (CLIP encoding)
-- Total caption generation: **1.70 images/sec** (end-to-end with I/O overhead)
-- Hardware: NVIDIA DGX Server with GPU acceleration
-
-### Query Performance (Measured on DGX Server)
-
-- **First query latency**: ~234ms (includes CLIP model warmup)
-- **Average query latency**: ~30-40ms (after warmup)
-- **Retrieval scale**: 45,623 images across 3 collections
-- **Scoring**: Relative normalization (default, most reliable)
-- **Metadata fetch**: Batch retrieval (10-30x faster than sequential)
-- **Scalability**: O(log n) with ChromaDB HNSW indexing
-- **Production ready**: Designed for millions of images
-
-### Why It Scales
-
-1. **ChromaDB**: Production-grade vector DB with efficient indexing
-2. **Independent Streams**: Each collection scales independently
-3. **Query-time Weighting**: No reindexing needed for different query types
-4. **Stateless Search**: No session management, fully parallelizable
-
-## Module Documentation
-
-- **Indexer Module**: See [indexer/README.md](indexer/README.md)
-- **Retriever Module**: See [retriever/README.md](retriever/README.md)
-
-### Query Expansion
-- Automatic synonym expansion based on keywords
-- Fashion-specific color terms
-- Scene and style descriptors
-
-## Why Query-Time Weighting?
-
-**Index-time fusion** (averaging vectors):
-- ❌ Fixed weights forever
-- ❌ Can't adapt to query intent
-- ❌ Loses information
-
-**Query-time weighting** (our approach):
-- ✅ Different weights per query type
-- ✅ Color query → boost visual
-- ✅ Style query → boost vibe
-- ✅ Maintains full information
-
-## Limitations & Future Work
-
-### Current Limitations
-1. **Color taxonomy**: Basic 20-color mapping; needs fine-grained taxonomy
-2. **Scene ambiguity**: BLIP-2 struggles with unclear backgrounds
-3. **Semantic similarity**: "raincoat" ↔ "trench coat" (feature, not bug!)
-
-### Future Enhancements
-1. **Cross-modal attention**: Fuse streams with Transformer encoder
-2. **Temporal/weather APIs**: Real-time context (GPS + weather data)
-3. **Fine-tuned CLIP**: Contrastive learning on Fashionpedia
-4. **Compositional negatives**: Hard negative mining for better attribute binding
-5. **User feedback loop**: Click-through rate optimization
-
-### How to Reproduce
-
-Run the automated evaluation:
-
-```bash
-./run_evaluation.sh  # Takes 2-3 minutes
-```
-
-View detailed results in `evaluation_results.json`
-
-**Methodology:**
-- **Precision@10 (P@10)**: Percentage of relevant results in top 10
-- **Automatic relevance judgment**: Keyword matching against metadata (30% threshold)
-- **Triple-Stream**: Uses α·S_fact + β·S_vibe + γ·S_img weighted fusion
-- **Vanilla CLIP**: Standard CLIP image-text matching (visual only)
+**Aayush Deshmukh**
 
 ## License
 
-This project uses the Fashionpedia dataset. See `fashionpedia-api-master/license.txt` for dataset license.
+This project uses the Fashionpedia dataset. See:
+
+```text
+fashionpedia-api-master/license.txt
+```
+
+for the applicable dataset license.
 
 ## Acknowledgments
 
-- Fashionpedia dataset and API
+- Fashionpedia
 - OpenAI CLIP
 - Salesforce BLIP-2
-- ChromaDB vector database
+- ChromaDB
